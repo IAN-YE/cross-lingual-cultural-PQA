@@ -3,18 +3,34 @@ import numpy as np
 from preprocess import preprocess
 from sklearn.model_selection import train_test_split
 import json
+from tqdm import tqdm
+from collections import defaultdict
+
+def preprocess_data(data):
+    asin_dict = defaultdict(list)
+    seen_questions = defaultdict(set)
+
+    for item in data:
+        asin = item["asin"]
+        question = item["question"]
+
+        if question not in seen_questions[asin]:
+            seen_questions[asin].add(question)
+            asin_dict[asin].append(item)
+
+    return asin_dict
 
 class BM25:
     def __init__(self, corpus):
-        corpus = [doc.lower() for doc in corpus]
+        self.corpus = [doc.lower() for doc in corpus]
         self.tokenized_corpus = [doc.split(" ") for doc in corpus]
         self.bm25 = BM25Okapi(self.tokenized_corpus)
 
     def get_top_n(self, query, n=5):
         tokenized_query = query.split(" ")
         doc_scores = self.bm25.get_scores(tokenized_query)
-        print(doc_scores)
-        top_n = [self.tokenized_corpus[i] for i in np.argsort(doc_scores)[::-1][:n]]
+        # print(doc_scores)
+        top_n = [self.corpus[i] for i in np.argsort(doc_scores)[::-1][:n]]
         return top_n
 
 def split_dataset(data, train_ratio=0.7, val_ratio=0.1, test_ratio=0.2, seed=42):
@@ -32,27 +48,53 @@ def read_jsonl(file):
             data.append(json.loads(line))
     return data
 
-def single_market(data):
-    corpus = []
-    for i in data:
-        corpus.append(i['question'])
-    return corpus
+def single_market(asin_dict, asin):
+    return [item["question"] for item in asin_dict.get(asin, [])]
 
 if __name__ == '__main__':
     country2 = ['au','ca','uk','in']
     country1 = ['br','cn','fr','jp','mx']
 
-    country = ['au']
+    country = ['cn']
     
-    data_path = '../../../data_PQA/McMarket/McMarket_all/'
+    data_path = '/home/bcm763/data_PQA/McMarket/McMarket_all/'
 
-    for c in country:
-        print(c)
-        data = read_jsonl(data_path + f'McMarket_LLM/McMarket_r/results_{c}.jsonl')
-        train_data, val_data, test_data = split_dataset(data)
+    auxilary_data = read_jsonl(data_path + 'McMarket/us_questions.jsonl')
+    auxilary_data = preprocess_data(auxilary_data)
 
-        print(len(train_data), len(val_data), len(test_data))
-        print(train_data[0].keys())
+    questions = "Does this tablet have 32g of memory?"
+    asin = "B0171BS9CG"
+    corpus = single_market(auxilary_data, asin)
+    print(corpus[0])
+    
+    bm25 = BM25(corpus)
+
+    top5 = bm25.get_top_n(questions, 5)
+    print(top5)
+
+    # for c in country:
+    #     print(c)
+    #     data = read_jsonl(data_path + f'McMarket/{c}_questions_translated.jsonl')
+    #     result_examples = read_jsonl(data_path + f'McMarket_LLM/McMarket_r/results_{c}.jsonl')
+    #     train_data, val_data, test_data = split_dataset(data)
+
+    #     print(len(train_data), len(val_data), len(test_data), len(result_examples))
+    #     # print(train_data[0].keys())
+    #     # print(result_examples[0].keys())
+
+    #     data_questions = {d["translatedQuestion"] for d in result_examples}
+    #     print(len(data_questions))
+
+    #     results = []
+
+    #     for i in tqdm(data_questions):
+    #         top5 = bm25.get_top_n(i, 5)
+    #         results.append({"question": i, "top5": top5})
+
+    #     with open(data_path + f'{c}_questions_bm25.jsonl', 'w', encoding='utf-8') as f:
+    #         for line in results:
+    #             f.write(json.dumps(line, ensure_ascii=False) + '\n')
+        
 
         # corpus = single_market(data)
         # bm25 = BM25(corpus)
