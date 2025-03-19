@@ -20,10 +20,13 @@ def preprocess_data(data):
 
     return asin_dict
 
+def single_market(asin_dict, asin):
+    return [item["question"] for item in asin_dict.get(asin, [])]
+
 class BM25:
-    def __init__(self, corpus):
-        self.corpus = [doc.lower() for doc in corpus]
-        self.tokenized_corpus = [doc.split(" ") for doc in corpus]
+    def __init__(self, asin_dict, asin):
+        self.corpus = single_market(asin_dict, asin)
+        self.tokenized_corpus = [doc.lower().split(" ") for doc in self.corpus]
         self.bm25 = BM25Okapi(self.tokenized_corpus)
 
     def get_top_n(self, query, n=5):
@@ -48,8 +51,7 @@ def read_jsonl(file):
             data.append(json.loads(line))
     return data
 
-def single_market(asin_dict, asin):
-    return [item["question"] for item in asin_dict.get(asin, [])]
+
 
 if __name__ == '__main__':
     country2 = ['au','ca','uk','in']
