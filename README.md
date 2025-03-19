@@ -1,1 +1,1 @@
-# cross-lingual-PQA
+# cross-lingual-cultural-PQA
