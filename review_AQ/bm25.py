@@ -27,7 +27,7 @@ def preprocess_data(data, type='q'):
     return asin_dict
 
 def single_market(asin_dict, asin):
-    return [item["question"] for item in asin_dict.get(asin, [])]
+    return [item["reviewText"] for item in asin_dict.get(asin, [])]
 
 class BM25:
     def __init__(self, asin_dict, asin):
