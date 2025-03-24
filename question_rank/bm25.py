@@ -66,10 +66,8 @@ if __name__ == '__main__':
 
     questions = "Does this tablet have 32g of memory?"
     asin = "B0171BS9CG"
-    corpus = single_market(auxilary_data, asin)
-    print(corpus[0])
     
-    bm25 = BM25(corpus)
+    bm25 = BM25(auxilary_data, asin)
 
     top5 = bm25.get_top_n(questions, 5)
     print(top5)
