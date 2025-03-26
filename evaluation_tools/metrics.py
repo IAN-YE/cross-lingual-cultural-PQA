@@ -9,7 +9,7 @@ def bleu_score(hypothesis, reference):
 def rouge_score(hypothesis, reference):
     rouge = evaluate.load("rouge")
     rouge_score = rouge.compute(predictions=hypothesis, references=reference)
-    return rouge_score['rouge2'].mid.fmeasure
+    return rouge_score
 
 def bert_score(hypothesis, reference):
     bert = evaluate.load("bertscore", module_type="metric")
@@ -23,18 +23,18 @@ def read_jsonl(file):
             data.append(json.loads(line))
     return data
 
-if __name__ == '__main__':
-    countries = ['au', 'br', 'ca', 'cn', 'fr', 'in', 'jp', 'mx', 'uk']
-    data_path = '/home/bcm763/data_PQA/McMarket/McMarket_all/McMarket_LLM/'
-    for c in countries:
-        contents = read_jsonl(data_path + f'McMarket_r/results_{c}.jsonl')
-        contents = [i for i in contents if i['topAnswer']!='']
-        hypothesis = [i['bm25_top5'][0] for i in contents]
-        reference = [i['topAnswer'] for i in contents]
-        rougle_result = rouge_score(hypothesis, reference)
-        bleu_result = bleu_score(hypothesis, reference)
-        bert_result = bert_score(hypothesis, reference)
-        print(f"{c} ROUGE: {rougle_result} BLEU: {bleu_result} BERT: {bert_result}")
+# if __name__ == '__main__':
+#     countries = ['au', 'br', 'ca', 'cn', 'fr', 'in', 'jp', 'mx', 'uk']
+#     data_path = '/home/bcm763/data_PQA/McMarket/McMarket_all/McMarket_LLM/'
+#     for c in countries:
+#         contents = read_jsonl(data_path + f'McMarket_r/results_{c}.jsonl')
+#         contents = [i for i in contents if i['topAnswer']!='']
+#         hypothesis = [i['bm25_top5'][0] for i in contents]
+#         reference = [i['topAnswer'] for i in contents]
+#         rougle_result = rouge_score(hypothesis, reference)
+#         bleu_result = bleu_score(hypothesis, reference)
+#         bert_result = bert_score(hypothesis, reference)
+#         print(f"{c} ROUGE: {rougle_result} BLEU: {bleu_result} BERT: {bert_result}")
 
 
     
