@@ -9,7 +9,7 @@ def bleu_score(hypothesis, reference):
 def rouge_score(hypothesis, reference):
     rouge = evaluate.load("rouge")
     rouge_score = rouge.compute(predictions=hypothesis, references=reference)
-    return rouge_score
+    return rouge_score['rougeL']
 
 def bert_score(hypothesis, reference):
     bert = evaluate.load("bertscore", module_type="metric")
