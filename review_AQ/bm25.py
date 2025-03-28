@@ -40,12 +40,12 @@ class BM25:
 def main_AQ_bm25():
     print("BM25")
     print("Clothing")
-    country2 = ['au','ca','uk','in']
-    country1 = ['cn','jp']
+    country2 = ['cn', 'jp']
+    country1 = ['cn','de', 'in', 'jp']
 
     country = ['au', 'br', 'ca', 'cn', 'fr', 'in', 'jp', 'mx', 'uk']
     
-    data_path = '/home/bcm763/data_PQA/Clothing/'
+    data_path = '/home/bcm763/data_PQA/McMarket/McMarket_all/McMarket/'
 
     auxilary_review = read_jsonl(data_path + 'us_reviews.jsonl')
     # auxilary_review = preprocess_data(auxilary_review)
@@ -58,9 +58,9 @@ def main_AQ_bm25():
     # top5 = bm25.get_top_n(questions, 5)
     # print(top5)
 
-    for c in country1:
+    for c in country2:
         print(c)
-        print("Clothing")
+        
         reivew = read_jsonl(data_path + f'{c}_reviews_translated.jsonl')
         single_review = preprocess_data(reivew, type='translate')
         merged_review = preprocess_data(reivew + auxilary_review, type='translate')
@@ -69,15 +69,17 @@ def main_AQ_bm25():
         # result_examples = read_jsonl(data_path + f'McMarket_LLM/McMarket_r/results_{c}.jsonl')
         train_data, val_data, test_data = split_dataset(questions_new)
 
-        print(len(train_data), len(val_data), len(test_data))
-        print(len(questions_original), len(questions_new))
-        # print(train_data[0].keys())
-        # print(result_examples[0].keys())
+        print(f" train: {len(train_data)}, val: {len(val_data)}, test: {len(test_data)}")
+        print(f"questions_original: {len(questions_original)}, questions_new: {len(questions_new)}")
+        print(f"single_review: {len(single_review)}, merged_review: {len(merged_review)}")
 
         for i in questions_new:
             asin = i['asin']
-            # single_corpus = single_market(single_review, asin)
+            if len(single_market(single_review, asin, type='translate')) == 0:
+                continue
+            # single_corpus = single_market(single_review, print
             # merged_corpus = single_market(merged_review, asin)
+
             bm25_single = BM25(single_review, asin)
             top5_single = bm25_single.get_top_n(i['translatedQuestion'], 5)
 
@@ -91,14 +93,24 @@ def main_AQ_bm25():
         #     for line in test_data:
         #         f.write(json.dumps(line, ensure_ascii=False) + '\n')
         
-        hypothesis_single = [i['bm25_single_top5'][0] for i in test_data]
-        reference = [i['translatedAnswer'] for i in test_data]
+        # hypothesis_single = [i['bm25_single_top5'][0] for i in questions_new]
+
+        hypothesis_single = []
+        hypothesis_merged = []
+        reference = []
+
+        for i in questions_new:
+            if 'bm25_single_top5' in i and i['bm25_single_top5']:
+                hypothesis_single.append(i['bm25_single_top5'][0])
+                hypothesis_merged.append(i['bm25_merged_top5'][0])
+                reference.append(i['translatedAnswer']) 
+
         rougle_result = rouge_score(hypothesis_single, reference)
         bleu_result = bleu_score(hypothesis_single, reference)
         bert_result = bert_score(hypothesis_single, reference)
         print(f"{c} single ROUGE: {rougle_result} BLEU: {bleu_result} BERT: {bert_result}") 
 
-        hypothesis_merged = [i['bm25_merged_top5'][0] for i in test_data]
+
         rougle_result = rouge_score(hypothesis_merged, reference)
         bleu_result = bleu_score(hypothesis_merged, reference)
         bert_result = bert_score(hypothesis_merged, reference)

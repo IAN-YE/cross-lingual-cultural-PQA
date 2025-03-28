@@ -28,33 +28,32 @@ class CLIR:
 
 
 def main():
+    print("Clothing")
     print("CLIR-jinaai/jina-reranker-v2-base-multilingual")
-    country2 = ['au','ca','uk','in']
-    country1 = ['br','cn','fr','jp','mx']
+    country2 = ['cn', 'jp']
+    country1 = ['cn','de', 'in', 'jp']
 
     country = ['au', 'br', 'ca', 'cn', 'fr', 'in', 'jp', 'mx', 'uk']
     
-    data_path = '/home/bcm763/data_PQA/McMarket/McMarket_all/'
+    data_path = '/home/bcm763/data_PQA/Clothing/'
 
-    auxilary_review = read_jsonl(data_path + 'McMarket/us_reviews.jsonl')
+    auxilary_review = read_jsonl(data_path + 'us_reviews.jsonl')
 
     CLIR_model = CLIR()
 
-    for c in country1:
+    for c in country2:
         print(c)
-        reivew = read_jsonl(data_path + f'McMarket/{c}_reviews_translated.jsonl')
-        single_review = preprocess_data(reivew, type='no-translate')
-        merged_review = preprocess_data(reivew + auxilary_review, type='no-translate')
-        questions_original = read_jsonl(data_path + f'McMarket/{c}_questions_translated.jsonl')
+        reivew = read_jsonl(data_path + f'{c}_reviews_translated.jsonl')
+        single_review = preprocess_data(reivew, type='translate')
+        merged_review = preprocess_data(reivew + auxilary_review, type='translate')
+        questions_original = read_jsonl(data_path + f'{c}_questions_translated.jsonl')
         questions_new = [i for i in questions_original if i['topAnswer']!='']
-        result_examples = read_jsonl(data_path + f'McMarket_LLM/McMarket_r/results_{c}.jsonl')
+        # result_examples = read_jsonl(data_path + f'McMarket_LLM/McMarket_r/results_{c}.jsonl')
         train_data, val_data, test_data = split_dataset(questions_new)
 
-        print(len(train_data), len(val_data), len(test_data), len(result_examples))
-        print(len(questions_original), len(questions_new))
-        # print(train_data[0].keys())
-        # print(result_examples[0].keys())
-
+        print(f" train: {len(train_data)}, val: {len(val_data)}, test: {len(test_data)}")
+        print(f"questions_original: {len(questions_original)}, questions_new: {len(questions_new)}")
+        print(f"single_review: {len(single_review)}, merged_review: {len(merged_review)}")
         for i in test_data:
             asin = i['asin']
             single_corpus = single_market(single_review, asin, type='no-translate')
@@ -63,6 +62,9 @@ def main():
             single_pairs = [[i['question'], doc] for doc in single_corpus]
             merged_pairs = [[i['question'], doc] for doc in merged_corpus]
 
+            # both single and merged are not empty
+            if not single_pairs or not merged_pairs:
+                continue
             single_scores = CLIR_model.compute_score(single_pairs)
             merged_scores = CLIR_model.compute_score(merged_pairs)
 
@@ -76,24 +78,23 @@ def main():
         #     for line in questions_new:
         #         f.write(json.dumps(line, ensure_ascii=False) + '\n')
         
-        hypothesis_single = [i['bm25_single_top5'][0] for i in test_data]
-        reference = [i['topAnswer'] for i in test_data]
+        hypothesis_single = []
+        hypothesis_merged = []
+        reference = []
+
+        for i in questions_new:
+            if 'bm25_single_top5' in i and i['bm25_single_top5']:
+                hypothesis_single.append(i['bm25_single_top5'][0])
+                hypothesis_merged.append(i['bm25_merged_top5'][0])
+                reference.append(i['translatedAnswer']) 
+
         rougle_result = rouge_score(hypothesis_single, reference)
         bleu_result = bleu_score(hypothesis_single, reference)
         bert_result = bert_score(hypothesis_single, reference)
         print(f"{c} single ROUGE: {rougle_result} BLEU: {bleu_result} BERT: {bert_result}") 
 
-        hypothesis_merged = [i['bm25_merged_top5'][0] for i in test_data]
+
         rougle_result = rouge_score(hypothesis_merged, reference)
         bleu_result = bleu_score(hypothesis_merged, reference)
         bert_result = bert_score(hypothesis_merged, reference)
         print(f"{c} merged ROUGE: {rougle_result} BLEU: {bleu_result} BERT: {bert_result}")
-
-
-        # corpus = single_market(reivew)
-        # bm25 = BM25(corpus)
-        # for i in data:
-        #     i['top5'] = bm25.get_top_n(i['question'], 5)
-        # with open(data_path + f'{c}_questions_bm25.jsonl', 'w', encoding='utf-8') as f:
-        #     for line in data:
-        #         f.write(json.dumps(line, ensure_ascii=False) + '\n')

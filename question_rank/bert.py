@@ -16,7 +16,7 @@ class BM25BERTReRanker:
     def __init__(self, bm25, model_name="amberoad/bert-multilingual-passage-reranking-msmarco", k=5):
         self.bm25 = bm25
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModel.from_pretrained(model_name)
+        self.model = AutoModel.from_pretrained(model_name).to('cuda' if torch.cuda.is_available() else 'cpu')
         self.score_model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=1)
         self.k = k
     
