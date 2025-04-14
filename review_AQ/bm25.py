@@ -73,6 +73,8 @@ def main_AQ_bm25():
         print(f"questions_original: {len(questions_original)}, questions_new: {len(questions_new)}")
         print(f"single_review: {len(single_review)}, merged_review: {len(merged_review)}")
 
+        single = []
+        merged = []
         for i in questions_new:
             asin = i['asin']
             if len(single_market(single_review, asin, type='translate')) == 0:
@@ -89,32 +91,44 @@ def main_AQ_bm25():
             i['bm25_single_top5'] = top5_single
             i['bm25_merged_top5'] = top5_merged
 
+            single.append([i['translatedQuestion'], top5_single])
+            merged.append([i['translatedQuestion'], top5_merged])
+        
+        with open('single.jsonl', 'w', encoding='utf-8') as f:
+            for line in single:
+                f.write(json.dumps(line, ensure_ascii=False) + '\n')
+        with open('merged.jsonl', 'w', encoding='utf-8') as f:
+            for line in merged:
+                f.write(json.dumps(line, ensure_ascii=False) + '\n')
+
+
+
         # with open(data_path + f'/AR_bm25/{c}_questions_translated.jsonl', 'w', encoding='utf-8') as f:
         #     for line in test_data:
         #         f.write(json.dumps(line, ensure_ascii=False) + '\n')
         
         # hypothesis_single = [i['bm25_single_top5'][0] for i in questions_new]
 
-        hypothesis_single = []
-        hypothesis_merged = []
-        reference = []
+        # hypothesis_single = []
+        # hypothesis_merged = []
+        # reference = []
 
-        for i in questions_new:
-            if 'bm25_single_top5' in i and i['bm25_single_top5']:
-                hypothesis_single.append(i['bm25_single_top5'][0])
-                hypothesis_merged.append(i['bm25_merged_top5'][0])
-                reference.append(i['translatedAnswer']) 
+        # for i in questions_new:
+        #     if 'bm25_single_top5' in i and i['bm25_single_top5']:
+        #         hypothesis_single.append(i['bm25_single_top5'][0])
+        #         hypothesis_merged.append(i['bm25_merged_top5'][0])
+        #         reference.append(i['translatedAnswer']) 
 
-        rougle_result = rouge_score(hypothesis_single, reference)
-        bleu_result = bleu_score(hypothesis_single, reference)
-        bert_result = bert_score(hypothesis_single, reference)
-        print(f"{c} single ROUGE: {rougle_result} BLEU: {bleu_result} BERT: {bert_result}") 
+        # rougle_result = rouge_score(hypothesis_single, reference)
+        # bleu_result = bleu_score(hypothesis_single, reference)
+        # bert_result = bert_score(hypothesis_single, reference)
+        # print(f"{c} single ROUGE: {rougle_result} BLEU: {bleu_result} BERT: {bert_result}") 
 
 
-        rougle_result = rouge_score(hypothesis_merged, reference)
-        bleu_result = bleu_score(hypothesis_merged, reference)
-        bert_result = bert_score(hypothesis_merged, reference)
-        print(f"{c} merged ROUGE: {rougle_result} BLEU: {bleu_result} BERT: {bert_result}")
+        # rougle_result = rouge_score(hypothesis_merged, reference)
+        # bleu_result = bleu_score(hypothesis_merged, reference)
+        # bert_result = bert_score(hypothesis_merged, reference)
+        # print(f"{c} merged ROUGE: {rougle_result} BLEU: {bleu_result} BERT: {bert_result}")
 
 
 

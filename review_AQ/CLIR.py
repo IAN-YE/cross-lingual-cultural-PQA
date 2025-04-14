@@ -28,20 +28,20 @@ class CLIR:
 
 
 def main():
-    print("Clothing")
+    print("Grocery & Gourmet Food")
     print("CLIR-jinaai/jina-reranker-v2-base-multilingual")
     country2 = ['cn', 'jp']
     country1 = ['cn','de', 'in', 'jp']
 
     country = ['au', 'br', 'ca', 'cn', 'fr', 'in', 'jp', 'mx', 'uk']
     
-    data_path = '/home/bcm763/data_PQA/Clothing/'
+    data_path = '/home/bcm763/data_PQA/Grocery & Gourmet Food/'
 
     auxilary_review = read_jsonl(data_path + 'us_reviews.jsonl')
 
     CLIR_model = CLIR()
 
-    for c in country2:
+    for c in ['cn']:
         print(c)
         reivew = read_jsonl(data_path + f'{c}_reviews_translated.jsonl')
         single_review = preprocess_data(reivew, type='translate')
@@ -74,15 +74,15 @@ def main():
             i['bm25_single_top5'] = single_results
             i['bm25_merged_top5'] = merged_results
         
-        # with open(data_path + f'/AR_bm25/{c}_CLIR.jsonl', 'w', encoding='utf-8') as f:
-        #     for line in questions_new:
-        #         f.write(json.dumps(line, ensure_ascii=False) + '\n')
+        with open(f'/home/bcm763/data_PQA/McMarket/McMarket_all/AR_bm25/{c}_CLIR_Grocery & Gourmet Food.jsonl', 'w', encoding='utf-8') as f:
+            for line in test_data:
+                f.write(json.dumps(line, ensure_ascii=False) + '\n')
         
         hypothesis_single = []
         hypothesis_merged = []
         reference = []
 
-        for i in questions_new:
+        for i in test_data:
             if 'bm25_single_top5' in i and i['bm25_single_top5']:
                 hypothesis_single.append(i['bm25_single_top5'][0])
                 hypothesis_merged.append(i['bm25_merged_top5'][0])
