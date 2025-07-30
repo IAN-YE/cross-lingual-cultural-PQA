@@ -70,7 +70,7 @@ def translate_reviews(file_path):
 
 import requests
 
-API_KEY = "AIzaSyCDpBW8kH_rjkqvB6ktYoodGzPhog3F498"  # 这里替换成你的 API Key
+API_KEY = ""  # 这里替换成你的 API Key
 URL = "https://translation.googleapis.com/language/translate/v2"
 
 
